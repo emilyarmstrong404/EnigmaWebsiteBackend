@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import encoder
+import os
+import uvicorn
 app = FastAPI()
 
 app.add_middleware(
@@ -199,6 +201,5 @@ def run_bombe(req: EncodeRequest):
     return {"results": results}
 
 if __name__ == "__main__":
-    import uvicorn
     port = int(os.environ.get("PORT", 8000))  # Render sets PORT automatically
     uvicorn.run(app, host="0.0.0.0", port=port)
