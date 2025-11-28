@@ -6,7 +6,8 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://enigmawebsiteappvercel.vercel.app"],  # Next.js dev server
+    allow_origins=["https://enigmawebsiteappvercel.vercel.app"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
