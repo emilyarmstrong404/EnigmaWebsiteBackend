@@ -283,14 +283,33 @@ def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
             return False
     return True
 
+# def crib_matches(ciphertext, crib, offset, left, middle, right):
+    # encoded_cipher = enigma_encode(ciphertext, left, middle, right)
+    # cipher_section = encoded_cipher[offset:offset+len(crib)]
+    # if cipher_section == crib:
+    #     return encoded_cipher
+    # else:
+    #     return None
+    # return cipher_section == crib
+    
 def crib_matches(ciphertext, crib, offset, left, middle, right):
-    encoded_cipher = encoder.enigma_encode(ciphertext, left, middle, right)
-    cipher_section = encoded_cipher[offset:offset+len(crib)]
-    if cipher_section == crib:
-        return encoded_cipher
+    for i in len(crib):
+        cipher_align = ciphertext[offset + i]
+    encoded_cipher_align = enigma_encode(cipher_align, left, middle, right)
+    if encoded_cipher_align == crib:
+        return encoded_cipher_align
     else:
         return None
-    # return cipher_section == crib
+    
+        
+    
+# def crib_matches(ciphertext, crib, offset, left, middle, right):
+#     encoded_cipher = enigma_encode(ciphertext, left, middle, right)
+#     cipher_section = encoded_cipher[offset:offset+len(crib)]
+#     if cipher_section == crib:
+#         return encoded_cipher
+#     else:
+#         return None
 
 # def crib_matches(ciphertext, crib, offset, left, middle, right):
 #     for i, crib_letter in enumerate(crib):
