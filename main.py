@@ -25,14 +25,23 @@ def step_rotor(rotor):
 ##############
 # def enigma_encode(inputstr: str, left_rotor_pos, middle_rotor_pos, right_rotor_pos):
 #     alphabet = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    
 #     plugboard = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
 #                  " ", " ", " ", " ", " "]
+#     plugBoard = {a: a for a in alphabet}
+#     for a, p in zip(alphabet, plugboard):
+#         if p != " ":
+#             plugBoard[a] = p
+#             plugBoard[p] = a
+            
 #     rota1 = list("EKMFLGDQVZNTOWYHXUSPAIBRCJ")
 #     rota2 = list("AJDKSIRUXBLHWTMCQGZNPYFVOE")
 #     rota3 = list("BDFHJLCPRTXVZNYEIWGAKMUSQO")
 #     reflector = list("EJMZALYXVBWFCRQUONTSPIKHGD")
 #     rota1notch = "Q"
 #     rota2notch = "E"
+    
+#     reFlector = dict(zip(alphabet, reflector))
 
 #     while rota1[0] != right_rotor_pos:
 #         rota1 = rota1[1:] + rota1[:1]
@@ -66,17 +75,11 @@ def step_rotor(rotor):
 #         MRota = dict(zip(alphabet, rota2))
 #         LRota = dict(zip(alphabet, rota3))
 
-#         reFlector = dict(zip(alphabet, reflector))
+        
 
 #         LRota_inv = {v: k for k, v in LRota.items()}
 #         MRota_inv = {v: k for k, v in MRota.items()}
 #         RRota_inv = {v: k for k, v in RRota.items()}
-
-#         plugBoard = {a: a for a in alphabet}
-#         for a, p in zip(alphabet, plugboard):
-#             if p != " ":
-#                 plugBoard[a] = p
-#                 plugBoard[p] = a
 
 #         return plugBoard[RRota_inv[MRota_inv[LRota_inv[reFlector[LRota[MRota[RRota[plugBoard[lettertoencode]]]]]]]]]
 
@@ -86,75 +89,63 @@ def step_rotor(rotor):
 #     return "".join(encoded_str)
 #############
 
-def enigma_encode(
-    inputstr: str,
-    rota1_start: str = "A",
-    rota2_start: str = "A",
-    rota3_start: str = "A"
-):
+def enigma_encode(inputstr, left_rotor_pos, middle_rotor_pos, right_rotor_pos):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    char_to_i = {c: i for i, c in enumerate(alphabet)}
 
-    alphabet = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    plugboard = [" "] * 25
+    # rotors
+    r1 = "EKMFLGDQVZNTOWYHXUSPAIBRCJ"
+    r2 = "AJDKSIRUXBLHWTMCQGZNPYFVOE"
+    r3 = "BDFHJLCPRTXVZNYEIWGAKMUSQO"
+    reflector = "EJMZALYXVBWFCRQUONTSPIKHGD"
 
-    rota1 = list("EKMFLGDQVZNTOWYHXUSPAIBRCJ")
-    rota2 = list("AJDKSIRUXBLHWTMCQGZNPYFVOE")
-    rota3 = list("BDFHJLCPRTXVZNYEIWGAKMUSQO")
-    reflector = list("EJMZALYXVBWFCRQUONTSPIKHGD")
+    r1_map = [char_to_i[c] for c in r1]
+    r2_map = [char_to_i[c] for c in r2]
+    r3_map = [char_to_i[c] for c in r3]
+    ref_map = [char_to_i[c] for c in reflector]
 
-    rota1notch = "Q"
-    rota2notch = "E"
-    rota3notch = "V"
+    r1_inv = [r1_map.index(i) for i in range(26)]
+    r2_inv = [r2_map.index(i) for i in range(26)]
+    r3_inv = [r3_map.index(i) for i in range(26)]
 
-    # --- Set starting positions ---
-    def set_rotor_start(rotor, start_letter):
-        idx = alphabet.index(start_letter)
-        return rotor[idx:] + rotor[:idx]
+    r1_pos = char_to_i[right_rotor_pos]
+    r2_pos = char_to_i[middle_rotor_pos]
+    r3_pos = char_to_i[left_rotor_pos]
 
-    rota1 = set_rotor_start(rota1, rota1_start)
-    rota2 = set_rotor_start(rota2, rota2_start)
-    rota3 = set_rotor_start(rota3, rota3_start)
+    r1_notch = char_to_i["Q"]
+    r2_notch = char_to_i["E"]
 
-    inputstr = inputstr.strip().upper()
-    encoded_str = []
+    result = []
 
-    def encode_letter(lettertoencode: str):
-        nonlocal rota1, rota2, rota3
+    for ch in inputstr.upper():
+        # stepping (double-step)
+        if r2_pos == r2_notch:
+            r3_pos = (r3_pos + 1) % 26
+            r2_pos = (r2_pos + 1) % 26
+        elif r1_pos == r1_notch:
+            r2_pos = (r2_pos + 1) % 26
 
-        rightrotaprestep = rota1[0]
-        middlerotaprestep = rota2[0]
+        r1_pos = (r1_pos + 1) % 26
 
-        # Step right rotor
-        rota1.append(rota1.pop(0))
+        i = char_to_i[ch]
 
-        # Step middle rotor
-        if rightrotaprestep == rota1notch or middlerotaprestep == rota2notch:
-            rota2.append(rota2.pop(0))
+        # forward
+        i = r1_map[(i + r1_pos) % 26]
+        i = r2_map[(i + r2_pos) % 26]
+        i = r3_map[(i + r3_pos) % 26]
 
-        # Step left rotor
-        if middlerotaprestep == rota2notch:
-            rota3.append(rota3.pop(0))
+        # reflector
+        i = ref_map[i]
 
-        RRota = dict(zip(alphabet, rota1))
-        MRota = dict(zip(alphabet, rota2))
-        LRota = dict(zip(alphabet, rota3))
-        reFlector = dict(zip(alphabet, reflector))
+        # backward
+        i = (r3_inv[i] - r3_pos) % 26
+        i = (r2_inv[i] - r2_pos) % 26
+        i = (r1_inv[i] - r1_pos) % 26
 
-        LRota_inv = {v: k for k, v in LRota.items()}
-        MRota_inv = {v: k for k, v in MRota.items()}
-        RRota_inv = {v: k for k, v in RRota.items()}
+        result.append(alphabet[i])
 
-        plugBoard = {a: a for a in alphabet}
-        for a, p in zip(alphabet, plugboard):
-            if p != " ":
-                plugBoard[a] = p
-                plugBoard[p] = a
+    return "".join(result)
 
-        return plugBoard[RRota_inv[MRota_inv[LRota_inv[reFlector[LRota[MRota[RRota[plugBoard[lettertoencode]]]]]]]]]
-
-    for eachletter in inputstr:
-        encoded_str.append(encode_letter(eachletter))
-
-    return "".join(encoded_str)
 
 @app.post("/encode")
 def encode_message(message: Message):
@@ -166,9 +157,9 @@ def encode_message(message: Message):
 
     encoded = enigma_encode(
         message.text,
-        rota3_start=left,
-        rota2_start=middle,
-        rota1_start=right
+        left_rotor_pos=left,
+        middle_rotor_pos=middle,
+        right_rotor_pos=right
     )
 
     return {"encoded": encoded}
