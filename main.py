@@ -355,17 +355,17 @@ def crib_matches(ciphertext, crib, offset, left, middle, right):
         "notches": (char_to_i["Q"], char_to_i["E"]),
     }
 
-    # --- advance rotors to crib offset ---
-    for _ in range(offset):
-        enigma_step_and_encode("A", state)  # dummy step
+    decoded = []
 
-    # --- check crib ---
-    decoded = list(ciphertext)
-    for i, crib_letter in enumerate(crib):
-        out = enigma_step_and_encode(ciphertext[offset + i], state)
-        decoded[offset + i] = out
-        if out != crib_letter:
-            return None
+    # --- decode entire message ---
+    for idx, ch in enumerate(ciphertext):
+        out = enigma_step_and_encode(ch, state)
+        decoded.append(out)
+
+        # --- verify crib only where it should apply ---
+        if offset <= idx < offset + len(crib):
+            if out != crib[idx - offset]:
+                return None
 
     return "".join(decoded)
 
