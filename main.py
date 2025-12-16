@@ -343,7 +343,7 @@ def crib_matches(ciphertext, crib, offset, left, middle, right):
     }
 
     # --- advance rotors to crib offset ---
-    for _ in range(max(0, offset - 1)):
+    for _ in range(offset):
         enigma_step_and_encode("A", state)  # dummy step
 
     # --- check crib ---
