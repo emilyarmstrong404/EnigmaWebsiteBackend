@@ -146,6 +146,45 @@ def enigma_encode(inputstr, left_rotor_pos, middle_rotor_pos, right_rotor_pos):
 
     return "".join(result)
 
+def enigma_single_letter(letter, left, middle, right):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    char_to_i = {c: i for i, c in enumerate(alphabet)}
+
+    r1 = "EKMFLGDQVZNTOWYHXUSPAIBRCJ"
+    r2 = "AJDKSIRUXBLHWTMCQGZNPYFVOE"
+    r3 = "BDFHJLCPRTXVZNYEIWGAKMUSQO"
+    reflector = "EJMZALYXVBWFCRQUONTSPIKHGD"
+
+    r1_map = [char_to_i[c] for c in r1]
+    r2_map = [char_to_i[c] for c in r2]
+    r3_map = [char_to_i[c] for c in r3]
+    ref_map = [char_to_i[c] for c in reflector]
+
+    r1_inv = [r1_map.index(i) for i in range(26)]
+    r2_inv = [r2_map.index(i) for i in range(26)]
+    r3_inv = [r3_map.index(i) for i in range(26)]
+
+    r1_pos = char_to_i[right]
+    r2_pos = char_to_i[middle]
+    r3_pos = char_to_i[left]
+
+    i = char_to_i[letter]
+
+    # forward (NO stepping)
+    i = r1_map[(i + r1_pos) % 26]
+    i = r2_map[(i + r2_pos) % 26]
+    i = r3_map[(i + r3_pos) % 26]
+
+    # reflector
+    i = ref_map[i]
+
+    # backward
+    i = (r3_inv[i] - r3_pos) % 26
+    i = (r2_inv[i] - r2_pos) % 26
+    i = (r1_inv[i] - r1_pos) % 26
+
+    return alphabet[i]
+
 
 @app.post("/encode")
 def encode_message(message: Message):
@@ -226,9 +265,7 @@ def find_cycles(neighbour_dict: dict):
     return cycles
 
 def encode_single_letter(letter, left, middle, right):
-    # Must encode only one letter, no stepping
-    encoded = encoder.enigma_single_letter(letter, left, middle, right)
-    return encoded[0]
+    return enigma_single_letter(letter, left, middle, right)
 
 def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
     for cycle in cycles:
@@ -257,9 +294,9 @@ def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
 
 def crib_matches(ciphertext, crib, offset, left, middle, right):
     for i, crib_letter in enumerate(crib):
-        encoded = encoder.enigma_single_letter(
+        encoded = enigma_single_letter(
             ciphertext[offset + i], left, middle, right
-        )[0]
+        )
         if encoded != crib_letter:
             return False
     return True
@@ -291,7 +328,7 @@ def run_bombe(req: EncodeRequest):
                         continue
                     # decoded = crib_matches(ciphertext, plaintext, offset, l_letter, m_letter, r_letter)
                     if crib_matches(ciphertext, plaintext, offset, l_letter, m_letter, r_letter):
-                        decoded = encoder.enigma_encode(ciphertext, l_letter, m_letter, r_letter)
+                        decoded = enigma_encode(ciphertext, l_letter, m_letter, r_letter)
                         results.append({
                             "offset": offset,
                             "rotor_positions": {"left": l_letter, "middle": m_letter, "right": r_letter},
