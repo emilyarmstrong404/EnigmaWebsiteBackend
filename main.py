@@ -16,18 +16,30 @@ app.add_middleware(
 
 class Message(BaseModel):
     text: str
+    keys: list[str]  # [left, middle, right]
 
-def enigma_encode(inputstr: str):
+def step_rotor(rotor):
+    """Rotate rotor by one position."""
+    return rotor[1:] + rotor[:1]
 
+
+def enigma_encode(inputstr: str, left_rotor_pos, middle_rotor_pos, right_rotor_pos):
     alphabet = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    plugboard = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]
+    plugboard = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
+                 " ", " ", " ", " ", " "]
     rota1 = list("EKMFLGDQVZNTOWYHXUSPAIBRCJ")
     rota2 = list("AJDKSIRUXBLHWTMCQGZNPYFVOE")
     rota3 = list("BDFHJLCPRTXVZNYEIWGAKMUSQO")
     reflector = list("EJMZALYXVBWFCRQUONTSPIKHGD")
     rota1notch = "Q"
     rota2notch = "E"
-    rota3notch = "V"
+
+    while rota1[0] != right_rotor_pos:
+        rota1 = rota1[1:] + rota1[:1]
+    while rota2[0] != middle_rotor_pos:
+        rota2 = rota2[1:] + rota2[:1]
+    while rota3[0] != left_rotor_pos:
+        rota3 = rota3[1:] + rota3[:1]
 
     inputstr = inputstr.strip().upper()
     inputstrlist = list(inputstr)
@@ -50,7 +62,6 @@ def enigma_encode(inputstr: str):
             rota3.append(rota3[0])
             rota3.pop(0)
 
-
         RRota = dict(zip(alphabet, rota1))
         MRota = dict(zip(alphabet, rota2))
         LRota = dict(zip(alphabet, rota3))
@@ -68,7 +79,7 @@ def enigma_encode(inputstr: str):
                 plugBoard[p] = a
 
         return plugBoard[RRota_inv[MRota_inv[LRota_inv[reFlector[LRota[MRota[RRota[plugBoard[lettertoencode]]]]]]]]]
-    
+
     for eachletter in inputstrlist:
         encoded_letter = encode_letter(eachletter)
         encoded_str.append(encoded_letter)
@@ -76,7 +87,19 @@ def enigma_encode(inputstr: str):
 
 @app.post("/encode")
 def encode_message(message: Message):
-    encoded = enigma_encode(message.text)
+    # Expecting exactly 3 single-letter rotor positions
+    if len(message.keys) != 3:
+        return {"error": "Exactly 3 rotor letters are required"}
+
+    left, middle, right = [k.upper() for k in message.keys]
+
+    encoded = enigma_encode(
+        message.text,
+        left_rotor_pos=left,
+        middle_rotor_pos=middle,
+        right_rotor_pos=right
+    )
+
     return {"encoded": encoded}
 
 
