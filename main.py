@@ -283,23 +283,23 @@ def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
             return False
     return True
 
-# def crib_matches(ciphertext, crib, offset, left, middle, right):
-#     encoded_cipher = encoder.enigma_encode(ciphertext, left, middle, right)
-#     cipher_section = encoded_cipher[offset:offset+len(crib)]
-#     if cipher_section == crib:
-#         return encoded_cipher
-#     else:
-#         return None
-#     # return cipher_section == crib
-
 def crib_matches(ciphertext, crib, offset, left, middle, right):
-    for i, crib_letter in enumerate(crib):
-        encoded = enigma_single_letter(
-            ciphertext[offset + i], left, middle, right
-        )
-        if encoded != crib_letter:
-            return False
-    return True
+    encoded_cipher = encoder.enigma_encode(ciphertext, left, middle, right)
+    cipher_section = encoded_cipher[offset:offset+len(crib)]
+    if cipher_section == crib:
+        return encoded_cipher
+    else:
+        return None
+    # return cipher_section == crib
+
+# def crib_matches(ciphertext, crib, offset, left, middle, right):
+#     for i, crib_letter in enumerate(crib):
+#         encoded = enigma_single_letter(
+#             ciphertext[offset + i], left, middle, right
+#         )
+#         if encoded != crib_letter:
+#             return False
+#     return True
 
 # --- FastAPI route ---
 @app.post("/crib")
@@ -326,9 +326,10 @@ def run_bombe(req: EncodeRequest):
                     r_letter = alphabet[right_pos]
                     if not enigma_rotors(cycles, edges, r_letter, m_letter, l_letter):
                         continue
-                    # decoded = crib_matches(ciphertext, plaintext, offset, l_letter, m_letter, r_letter)
-                    if crib_matches(ciphertext, plaintext, offset, l_letter, m_letter, r_letter):
-                        decoded = enigma_encode(ciphertext, l_letter, m_letter, r_letter)
+                    decoded = crib_matches(ciphertext, plaintext, offset, l_letter, m_letter, r_letter)
+                    if decoded is not None:
+                    # if crib_matches(ciphertext, plaintext, offset, l_letter, m_letter, r_letter):
+                        # decoded = enigma_encode(ciphertext, l_letter, m_letter, r_letter)
                         results.append({
                             "offset": offset,
                             "rotor_positions": {"left": l_letter, "middle": m_letter, "right": r_letter},
