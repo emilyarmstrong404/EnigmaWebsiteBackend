@@ -268,6 +268,25 @@ def find_cycles(neighbour_dict: dict):
 def encode_single_letter(letter, left, middle, right):
     return enigma_single_letter(letter, left, middle, right)
 
+# def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
+#     for cycle in cycles:
+#         n = len(cycle)
+#         for index in range(n):
+#             letter = cycle[index]
+#             expected = cycle[(index + 1) % n]
+#             result = encode_single_letter(letter, left_letter, middle_letter, right_letter)
+#             if result != expected:
+#                 return False
+
+#     for edge in edges:
+#         encoded_crib_letter = encode_single_letter(edge[0], left_letter, middle_letter, right_letter)
+#         if encoded_crib_letter != edge[1]:
+#             return False
+#         if encoded_crib_letter == edge[0]:
+#             return False
+#     return True
+
+
 def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
     for cycle in cycles:
         n = len(cycle)
@@ -277,14 +296,8 @@ def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
             result = encode_single_letter(letter, left_letter, middle_letter, right_letter)
             if result != expected:
                 return False
-
-    for edge in edges:
-        encoded_crib_letter = encode_single_letter(edge[0], left_letter, middle_letter, right_letter)
-        if encoded_crib_letter != edge[1]:
-            return False
-        if encoded_crib_letter == edge[0]:
-            return False
     return True
+
 
 # def crib_matches(ciphertext, crib, offset, left, middle, right):
     # encoded_cipher = enigma_encode(ciphertext, left, middle, right)
