@@ -207,6 +207,7 @@ def encode_message(message: Message):
 
 
 alphabet = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+char_to_i = {c: i for i, c in enumerate(alphabet)}
 
 class EncodeRequest(BaseModel):
     plaintext: str
@@ -292,17 +293,6 @@ def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
     #     return None
     # return cipher_section == crib
     
-def crib_matches(ciphertext, crib, offset, left, middle, right):
-    for i in len(crib):
-        cipher_align = ciphertext[offset + i]
-    encoded_cipher_align = enigma_encode(cipher_align, left, middle, right)
-    if encoded_cipher_align == crib:
-        return encoded_cipher_align
-    else:
-        return None
-    
-        
-    
 # def crib_matches(ciphertext, crib, offset, left, middle, right):
 #     encoded_cipher = enigma_encode(ciphertext, left, middle, right)
 #     cipher_section = encoded_cipher[offset:offset+len(crib)]
@@ -319,6 +309,82 @@ def crib_matches(ciphertext, crib, offset, left, middle, right):
 #         if encoded != crib_letter:
 #             return False
 #     return True
+
+def crib_matches(ciphertext, crib, offset, left, middle, right):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    # --- rotor setup (same as enigma_encode) ---
+    r1 = "EKMFLGDQVZNTOWYHXUSPAIBRCJ"
+    r2 = "AJDKSIRUXBLHWTMCQGZNPYFVOE"
+    r3 = "BDFHJLCPRTXVZNYEIWGAKMUSQO"
+    reflector = "EJMZALYXVBWFCRQUONTSPIKHGD"
+
+    r1_map = [char_to_i[c] for c in r1]
+    r2_map = [char_to_i[c] for c in r2]
+    r3_map = [char_to_i[c] for c in r3]
+    ref_map = [char_to_i[c] for c in reflector]
+
+    r1_inv = [r1_map.index(i) for i in range(26)]
+    r2_inv = [r2_map.index(i) for i in range(26)]
+    r3_inv = [r3_map.index(i) for i in range(26)]
+
+    state = {
+        "maps": (r1_map, r2_map, r3_map),
+        "invs": (r1_inv, r2_inv, r3_inv),
+        "ref": ref_map,
+        "pos": (
+            char_to_i[right],
+            char_to_i[middle],
+            char_to_i[left],
+        ),
+        "notches": (char_to_i["Q"], char_to_i["E"]),
+    }
+
+    # --- advance rotors to crib offset ---
+    for _ in range(max(0, offset - 1)):
+        enigma_step_and_encode("A", state)  # dummy step
+
+    # --- check crib ---
+    decoded = list(ciphertext)
+    for i, crib_letter in enumerate(crib):
+        out = enigma_step_and_encode(ciphertext[offset + i], state)
+        decoded[offset + i] = out
+        if out != crib_letter:
+            return None
+
+    return "".join(decoded)
+
+def enigma_step_and_encode(letter, state):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    r1_map, r2_map, r3_map = state["maps"]
+    r1_inv, r2_inv, r3_inv = state["invs"]
+    ref_map = state["ref"]
+
+    r1_pos, r2_pos, r3_pos = state["pos"]
+    r1_notch, r2_notch = state["notches"]
+
+    # --- stepping (same as enigma_encode) ---
+    if r2_pos == r2_notch:
+        r3_pos = (r3_pos + 1) % 26
+        r2_pos = (r2_pos + 1) % 26
+    elif r1_pos == r1_notch:
+        r2_pos = (r2_pos + 1) % 26
+
+    r1_pos = (r1_pos + 1) % 26
+
+    # --- encode ---
+    i = char_to_i[letter]
+    i = r1_map[(i + r1_pos) % 26]
+    i = r2_map[(i + r2_pos) % 26]
+    i = r3_map[(i + r3_pos) % 26]
+    i = ref_map[i]
+    i = (r3_inv[i] - r3_pos) % 26
+    i = (r2_inv[i] - r2_pos) % 26
+    i = (r1_inv[i] - r1_pos) % 26
+
+    state["pos"] = (r1_pos, r2_pos, r3_pos)
+    return alphabet[i]
 
 # --- FastAPI route ---
 @app.post("/crib")
