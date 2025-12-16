@@ -280,7 +280,9 @@ def enigma_rotors(cycles, edges, right_letter, middle_letter, left_letter):
 
     for edge in edges:
         encoded_crib_letter = encode_single_letter(edge[0], left_letter, middle_letter, right_letter)
-        if encoded_crib_letter == edge[1]:
+        if encoded_crib_letter != edge[1]:
+            return False
+        if encoded_crib_letter == edge[0]:
             return False
     return True
 
